@@ -1,5 +1,5 @@
 {
-    "name": "xnf4o/sberbank",
+    "name": "feny85/sberbank",
     "type": "library",
     "description": "Laravel sberbank bank acquiring library.",
     "keywords": [
@@ -17,7 +17,7 @@
             "homepage": "https://github.com/xnf4o/",
             "role": "Developer"
         }
-    ],    
+    ],
     "require": {
         "php": "^7.1",
         "ext-mbstring": "*",

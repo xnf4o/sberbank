@@ -39,14 +39,14 @@ class Sberbank
     /**
      * Инициализация
      *
-     * @param bool $is_access_by_token Если true, то авторизация через токен, в ином случае login & password
-     * @param array $auth Массив данных для авторизации
+     * @param  bool  $is_access_by_token  Если true, то авторизация через токен, в ином случае login & password
+     * @param  array  $auth  Массив данных для авторизации
      */
     public function __construct(bool $is_access_by_token, array $auth)
     {
-        $this->acquiring_url = 'https://3dsec.sberbank.ru';
+        $this->acquiring_url = 'https://securepayments.sberbank.ru';
 
-        if (! empty($auth['acquiring_url'])) {
+        if (!empty($auth['acquiring_url'])) {
             $this->acquiring_url = $auth['acquiring_url'];
         }
 
@@ -78,7 +78,7 @@ class Sberbank
     /**
      * Adding slash on end of url string if not there
      *
-     * @param string $url УРЛ для проверки
+     * @param  string  $url  УРЛ для проверки
      * @return string
      */
     private function checkSlashOnUrlEnd($url): string
@@ -106,12 +106,12 @@ class Sberbank
      * Sberbank doesn't receive description longer that $description_max_lenght
      * $amount_multiplicator - need for convert price to cents
      *
-     * @param array $data array of payment data
+     * @param  array  $data  array of payment data
      * @return array of data
      */
     public function paymentURL(array $data): array
     {
-        if (! $this->paymentArrayChecked($data)) {
+        if (!$this->paymentArrayChecked($data)) {
             $this->error = 'Incomplete payment data';
 
             return [
@@ -127,7 +127,7 @@ class Sberbank
         $description_max_lenght = 24;
         $amount_multiplicator = 100;
 
-        $data['amount'] = (int) ceil($data['amount'] * $amount_multiplicator);
+        $data['amount'] = (int)ceil($data['amount'] * $amount_multiplicator);
         $data['currency'] = $this->getCurrency($data['currency']);
         $data['description'] = mb_strimwidth($data['description'], 0, $description_max_lenght - 1, '');
 
@@ -144,7 +144,7 @@ class Sberbank
     /**
      * Проверка массива оплаты на наличие всех ключей
      *
-     * @param array $array_for_check Массив для проверки
+     * @param  array  $array_for_check  Массив для проверки
      * @return bool
      */
     private function paymentArrayChecked(array $array_for_check): bool
@@ -157,19 +157,19 @@ class Sberbank
     /**
      * Проверка наличия всех $keys в $arr
      *
-     * @param array $keys Массив ключей
-     * @param array $arr Массив на проверку
+     * @param  array  $keys  Массив ключей
+     * @param  array  $arr  Массив на проверку
      * @return bool
      */
     private function allKeysIsExistInArray(array $keys, array $arr): bool
     {
-        return (bool) ! array_diff_key(array_flip($keys), $arr);
+        return (bool)!array_diff_key(array_flip($keys), $arr);
     }
 
     /**
      * Получение кода валюты по наименованию
      *
-     * @param string $currency Наименование валюты
+     * @param  string  $currency  Наименование валюты
      * @return int|null
      */
     private function getCurrency($currency = 'RUB'): ?int
@@ -192,13 +192,12 @@ class Sberbank
     /**
      * Отправка запроса в мерчант сбербанка
      *
-     * @param string $path Урл API
-     * @param array $data Параметры
+     * @param  string  $path  Урл API
+     * @param  array  $data  Параметры
      * @return bool
      */
     private function sendRequest(string $path, array $data): bool
     {
-
         if ($this->is_access_by_token) {
             $data['token'] = $this->access_token;
         } else {
@@ -231,9 +230,9 @@ class Sberbank
                     return false;
                 }
 
-                $this->payment_id = @$json->orderId;
-                $this->payment_url = @$json->formUrl;
-                $this->payment_status = @$json->orderStatus;
+                $this->payment_id = @$json["orderId"];
+                $this->payment_url = @$json["formUrl"];
+                $this->payment_status = @$json["orderStatus"];
 
                 return true;
             }
@@ -258,11 +257,11 @@ class Sberbank
         $response = json_decode($this->response, true);
 
         if (isset($response['errorCode'])) {
-            $error_code = (int) $response['errorCode'];
+            $error_code = (int)$response['errorCode'];
         } elseif (isset($response['ErrorCode'])) {
-            $error_code = (int) $response['ErrorCode'];
+            $error_code = (int)$response['ErrorCode'];
         } elseif (isset($response['error']['code'])) {
-            $error_code = (int) $response['error']['code'];
+            $error_code = (int)$response['error']['code'];
         } else {
             $error_code = 0;
         }
@@ -291,7 +290,7 @@ class Sberbank
     /**
      * Проверка статуса платежа
      *
-     * @param string $payment_id ID платежа
+     * @param  string  $payment_id  ID платежа
      * @return array
      */
     public function getState(string $payment_id): array
