@@ -182,7 +182,7 @@ class Sberbank
         }
 
         return [
-            'success' => $this->sendRequest($this->url_google_pay, $data),
+            'success' => $this->sendRequest($this->url_google_pay, $data, true),
             'error' => $this->error,
             'response' => $this->response,
             'payment_id' => $this->payment_id,
@@ -216,7 +216,7 @@ class Sberbank
         }
 
         return [
-            'success' => $this->sendRequest($this->url_apple_pay, $data),
+            'success' => $this->sendRequest($this->url_apple_pay, $data, true),
             'error' => $this->error,
             'response' => $this->response,
             'payment_id' => $this->payment_id,
@@ -275,7 +275,7 @@ class Sberbank
      * @param  array  $data  Параметры
      * @return bool
      */
-    private function sendRequest(string $path, array $data): bool
+    private function sendRequest(string $path, array $data, $mobile = false): bool
     {
         if ($this->is_access_by_token) {
             $data['token'] = $this->access_token;
@@ -285,6 +285,7 @@ class Sberbank
         }
 
         $data = http_build_query($data);
+        $content_type = $mobile ? 'application/json' : 'application/x-www-form-urlencoded';
 
         if ($curl = curl_init()) {
             curl_setopt($curl, CURLOPT_URL, $path);
@@ -295,7 +296,7 @@ class Sberbank
             curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
             curl_setopt($curl, CURLOPT_HTTPHEADER, [
                 'Cache-Control: no-cache',
-                'Content-Type:  application/x-www-form-urlencoded',
+                'Content-Type: '.$content_type,
             ]);
 
             $response = curl_exec($curl);
