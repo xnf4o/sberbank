@@ -284,7 +284,7 @@ class Sberbank
             $data['password'] = $this->password;
         }
 
-        $data = $mobile ? json_encode($data) : ($data);
+        $data = $mobile ? json_encode($data) : http_build_query($data);
         $content_type = $mobile ? 'application/json' : 'application/x-www-form-urlencoded';
 
         if ($curl = curl_init()) {
