@@ -32,9 +32,27 @@ class Sberbank
 
     private $url_init;
 
-    private $url_cancel;
-
     private $url_get_state;
+
+    private $url_google_pay;
+
+    private $url_apple_pay;
+
+    public $description_max_length;
+
+    public $amount_multiplicator;
+    /**
+     * @var mixed
+     */
+    private $password;
+    /**
+     * @var mixed
+     */
+    private $login;
+    /**
+     * @var bool
+     */
+    private $is_access_by_token;
 
     /**
      * Инициализация
@@ -60,6 +78,8 @@ class Sberbank
         }
 
         $this->setupUrls();
+        $this->description_max_length = 24;
+        $this->amount_multiplicator = 100;
     }
 
     /**
@@ -71,8 +91,9 @@ class Sberbank
     {
         $this->acquiring_url = $this->checkSlashOnUrlEnd($this->acquiring_url);
         $this->url_init = $this->acquiring_url.'payment/rest/register.do';
-        $this->url_cancel = $this->acquiring_url.'payment/rest/reverse.do';
         $this->url_get_state = $this->acquiring_url.'payment/rest/getOrderStatusExtended.do';
+        $this->url_google_pay = $this->acquiring_url.'payment/google/payment.do';
+        $this->url_apple_pay = $this->acquiring_url.'payment/applepay/payment.do';
     }
 
     /**
@@ -81,7 +102,7 @@ class Sberbank
      * @param  string  $url  УРЛ для проверки
      * @return string
      */
-    private function checkSlashOnUrlEnd($url): string
+    private function checkSlashOnUrlEnd(string $url): string
     {
         if ($url[strlen($url) - 1] !== '/') {
             $url .= '/';
@@ -91,20 +112,13 @@ class Sberbank
     }
 
     /**
-     * TODO: Cancel payment
-     * For canceling payment need to use
-     * username and password for initialize Sberbank API
-     */
-
-    /**
      * Generate Sberbank payment URL
      *
      * -------------------------------------------------
      * For generate url need to send $payment array and array of $items
      * All keys for correct checking in paymentArrayChecked()
      *
-     * Sberbank doesn't receive description longer that $description_max_lenght
-     * $amount_multiplicator - need for convert price to cents
+     * Sberbank doesn't receive description longer that $this->description_max_length
      *
      * @param  array  $data  array of payment data
      * @return array of data
@@ -124,12 +138,10 @@ class Sberbank
             ];
         }
 
-        $description_max_lenght = 24;
-        $amount_multiplicator = 100;
 
-        $data['amount'] = (int)ceil($data['amount'] * $amount_multiplicator);
+        $data['amount'] = (int)ceil($data['amount'] * $this->amount_multiplicator);
         $data['currency'] = $this->getCurrency($data['currency']);
-        $data['description'] = mb_strimwidth($data['description'], 0, $description_max_lenght - 1, '');
+        $data['description'] = mb_strimwidth($data['description'], 0, $this->description_max_length - 1, '');
 
         return [
             'success' => $this->sendRequest($this->url_init, $data),
@@ -142,16 +154,83 @@ class Sberbank
     }
 
     /**
+     * Регистрация транзакции по Google Pay по токену
+     *
+     * @link https://developer.sberbank.ru/doc/v1/acquiring/api-android-pay
+     *
+     * @param  array  $data  array of payment data
+     * @return array of data
+     *
+     */
+    public function googlePay(array $data): array
+    {
+        if (!$this->paymentArrayChecked($data, array('amount', 'paymentToken', 'orderNumber', 'merchant'))) {
+            $this->error = 'Incomplete payment data';
+
+            return [
+                'success' => false,
+                'error' => $this->error,
+                'response' => $this->response,
+                'payment_id' => $this->payment_id,
+            ];
+        }
+
+        $data['amount'] = (int)ceil($data['amount'] * $this->amount_multiplicator);
+        $data['description'] = mb_strimwidth($data['description'], 0, $this->description_max_length - 1, '');
+        !$data['currencyCode'] ?: $data['currency'] = $this->getCurrency($data['currency']);
+
+        return [
+            'success' => $this->sendRequest($this->url_google_pay, $data),
+            'error' => $this->error,
+            'response' => $this->response,
+            'payment_id' => $this->payment_id,
+        ];
+    }
+
+    /**
+     * Регистрация транзакции по Google Pay по токену
+     *
+     * @link https://developer.sberbank.ru/doc/v1/acquiring/apple-pay-mobile
+     *
+     * @param  array  $data  array of payment data
+     * @return array of data
+     */
+    public function applePay(array $data): array
+    {
+        if (!$this->paymentArrayChecked($data, array('paymentToken', 'orderNumber', 'merchant'))) {
+            $this->error = 'Incomplete payment data';
+
+            return [
+                'success' => false,
+                'error' => $this->error,
+                'response' => $this->response,
+                'payment_id' => $this->payment_id,
+            ];
+        }
+
+        $data['description'] = mb_strimwidth($data['description'], 0, $this->description_max_length - 1, '');
+        !$data['currencyCode'] ?: $data['currency'] = $this->getCurrency($data['currency']);
+
+        return [
+            'success' => $this->sendRequest($this->url_apple_pay, $data),
+            'error' => $this->error,
+            'response' => $this->response,
+            'payment_id' => $this->payment_id,
+        ];
+    }
+
+    /**
      * Проверка массива оплаты на наличие всех ключей
      *
      * @param  array  $array_for_check  Массив для проверки
+     * @param  null  $custom_keys
      * @return bool
      */
-    private function paymentArrayChecked(array $array_for_check): bool
+    private function paymentArrayChecked(array $array_for_check, $custom_keys = null): bool
     {
         $keys = ['orderNumber', 'amount', 'returnUrl', 'failUrl', 'description', 'language'];
 
-        return $this->allKeysIsExistInArray($keys, $array_for_check);
+        return $this->allKeysIsExistInArray($custom_keys ?: $keys, $array_for_check);
     }
 
     /**
@@ -163,7 +242,7 @@ class Sberbank
      */
     private function allKeysIsExistInArray(array $keys, array $arr): bool
     {
-        return (bool)!array_diff_key(array_flip($keys), $arr);
+        return !array_diff_key(array_flip($keys), $arr);
     }
 
     /**
@@ -172,18 +251,14 @@ class Sberbank
      * @param  string  $currency  Наименование валюты
      * @return int|null
      */
-    private function getCurrency($currency = 'RUB'): ?int
+    private function getCurrency(string $currency = 'RUB'): ?int
     {
         switch ($currency) {
             case('EUR'):
                 return 978;
-                break;
             case('USD'):
                 return 840;
-                break;
             case('RUB'):
-                return 643;
-                break;
             default:
                 return 643;
         }
@@ -205,7 +280,7 @@ class Sberbank
             $data['password'] = $this->password;
         }
 
-        $data = http_build_query($data, '', '&');
+        $data = http_build_query($data);
 
         if ($curl = curl_init()) {
             curl_setopt($curl, CURLOPT_URL, $path);
