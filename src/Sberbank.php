@@ -177,7 +177,7 @@ class Sberbank
 
         $data['amount'] = (int)ceil($data['amount'] * $this->amount_multiplicator);
         $data['description'] = mb_strimwidth($data['description'], 0, $this->description_max_length - 1, '');
-        if ($data['currency']) {
+        if (isset($data['currency']) && $data['currency']) {
             $data['currencyCode'] = $this->getCurrency($data['currency']);
         }
 
@@ -211,7 +211,7 @@ class Sberbank
         }
 
         $data['description'] = mb_strimwidth($data['description'], 0, $this->description_max_length - 1, '');
-        if ($data['currency']) {
+        if (isset($data['currency']) && $data['currency']) {
             $data['currencyCode'] = $this->getCurrency($data['currency']);
         }
 
