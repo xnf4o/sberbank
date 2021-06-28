@@ -177,7 +177,9 @@ class Sberbank
 
         $data['amount'] = (int)ceil($data['amount'] * $this->amount_multiplicator);
         $data['description'] = mb_strimwidth($data['description'], 0, $this->description_max_length - 1, '');
-        !$data['currencyCode'] ?: $data['currency'] = $this->getCurrency($data['currency']);
+        if ($data['currency']) {
+            $data['currencyCode'] = $this->getCurrency($data['currency']);
+        }
 
         return [
             'success' => $this->sendRequest($this->url_google_pay, $data),
@@ -209,7 +211,9 @@ class Sberbank
         }
 
         $data['description'] = mb_strimwidth($data['description'], 0, $this->description_max_length - 1, '');
-        !$data['currencyCode'] ?: $data['currency'] = $this->getCurrency($data['currency']);
+        if ($data['currency']) {
+            $data['currencyCode'] = $this->getCurrency($data['currency']);
+        }
 
         return [
             'success' => $this->sendRequest($this->url_apple_pay, $data),
