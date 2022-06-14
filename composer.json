@@ -1,30 +1,32 @@
 {
-    "name": "kimchi/sberbank",
-    "type": "library",
-    "description": "Laravel sberbank bank acquiring library.",
-    "keywords": [
-        "sberbank",
-        "acquiring",
-        "laravel",
-        "billing"
-    ],
-    "homepage": "https://github.com/xnf4o/sberbank",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Evgeniy Gerasimov",
-            "email": "xnf4o@inbox.ru",
-            "homepage": "https://github.com/xnf4o/",
-            "role": "Developer"
-        }
-    ],
-    "require": {
-        "php": "^7.1 || ^8.1",
-        "ext-mbstring": "*",
-        "ext-curl": "*",
-        "ext-json": "*"
-    },
-    "autoload": {
-        "psr-4": { "xnf4o\\": "src" }
+  "name": "kimchi/sberbank",
+  "type": "library",
+  "description": "Laravel sberbank bank acquiring library.",
+  "keywords": [
+    "sberbank",
+    "acquiring",
+    "laravel",
+    "billing"
+  ],
+  "homepage": "https://github.com/xnf4o/sberbank",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Evgeniy Gerasimov",
+      "email": "xnf4o@inbox.ru",
+      "homepage": "https://github.com/xnf4o/",
+      "role": "Developer"
     }
+  ],
+  "require": {
+    "php": "^7.1 || ^8.1",
+    "ext-mbstring": "*",
+    "ext-curl": "*",
+    "ext-json": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "xnf4o\\": "src"
+    }
+  }
 }
